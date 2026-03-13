@@ -29,10 +29,7 @@ void build_adj_matrix()
     // go through entire edge list and set adj[trg][src] to 1 -- can traverse all influences of trg easily
     // want to look at all target's potential influences to decide how their stance changes
     
-    adj.reserve(total_nodes); // reserve square matrix, total_nodes x total_nodes
-    for (int i = 0; i < total_nodes; i++) {
-        adj[i].reserve(total_nodes);
-    }
+    adj.resize(total_nodes, vector<int>(total_nodes, 0)); // reserve square matrix, total_nodes x total_nodes
 
     // initialize all to 0 
     for (int i = 0; i < total_nodes; i++) {
@@ -85,7 +82,7 @@ int get_majority_friend_opinions(int node)
 }
 
 // Calculate new opinions for all voters and return if anyone's opinion changed
-bool update_opinions()
+bool update_opinions() // asynchronous update - each actor opinion is updated from node 0-39.
 {
     int changedFlag = 0;
     int friendOpinion = 0;
