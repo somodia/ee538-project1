@@ -3,12 +3,16 @@
 #include <vector>
 using namespace std;
 
+struct Node {
+    int data;
+    Node* next;
+};
 /********************DO NOT EDIT**********************/
 // Function prototype. Defined later.
 void read_opinions(string filename); // reads file into opinions vector and updates total_nodes as needed
 void read_edges(string filename); // reads file into edge_list, defined later
-void build_adj_matrix(); // convert edge_list to adjacency matrix
-
+void build_adj_list(); // convert edge_list to adj list
+Node* insertBack(Node* head, int value);
 int total_nodes = 0; // We keep track of the total number of nodes based on largest node id.
 
 
@@ -18,32 +22,43 @@ int total_nodes = 0; // We keep track of the total number of nodes based on larg
 // simple vector to hold each node's opinion (0 or 1)
 std::vector<int> opinions;
 
-// global adjacency matrix initialized later (nxn matrix, 1 where connection is true)
-std::vector<std::vector<int>> adj;
+// global adjacency LIST initialized later (n x variable matrix, 1 where connection is true)
+std::vector<Node*> adj;
 
 // edge list: each row contains {source, target}
 std::vector<std::vector<int>> edge_list;
 
-void build_adj_matrix()
+Node* insertBack(Node* head, int value) {
+    Node* newNode = new Node();
+    newNode->data = value;
+    newNode->next = NULL;
+    
+    if (head == NULL) {
+        return newNode;
+    }
+    
+    Node* current = head;
+    while (current->next != NULL) {
+        current = current->next;
+    }
+    current->next = newNode;
+    
+    return head;
+}
+
+void build_adj_list()
 {
     // go through entire edge list and set adj[trg][src] to 1 -- can traverse all influences of trg easily
     // want to look at all target's potential influences to decide how their stance changes
     
-    adj.resize(total_nodes, vector<int>(total_nodes, 0)); // reserve square matrix, total_nodes x total_nodes
-
-    // initialize all to 0 
-    for (int i = 0; i < total_nodes; i++) {
-        for (int j = 0; j < total_nodes; j++) {
-            adj[i][0] = 0;
-        }
-    }
+    adj.assign(total_nodes, NULL); // reserve vector of total_nodes Node* init to null
 
     int src;
     int trg;
     for (int i = 0; i < edge_list.size(); i++) { // traverse entire edge_list, get src and trg
         src = edge_list[i][0];
         trg = edge_list[i][1];
-        adj[trg][src] = 1; // set to 1 if influence exists
+        adj[trg] = insertBack(adj[trg], src); // add src to trg's list of influences
     }
 }
 
@@ -62,15 +77,14 @@ int get_majority_friend_opinions(int node)
     int num_ones = 0;
     int num_zeros = 0;
 
-
-    for (int i = 0; i < total_nodes; i++) {
-        if (adj[node][i] == 1) { // if i is an influence on node
-            if (opinions[i] == 1) { // influence's opinion is a 1; add point for 1s
-                num_ones++;
-            } else {
-                num_zeros++; // influence's opinion is a 0; add point for 0s
-            }
+    Node* curr = adj[node];
+    while (curr != NULL) { // for all of node's influences
+        if (opinions[curr->data] == 1) {  // if influence opinion is 1, add point for 1s
+            num_ones++;
+        } else {
+            num_zeros++; // influence's opinion is a 0; add point for 0s
         }
+        curr = curr->next;
     }
 
     if (num_ones > num_zeros) {
@@ -105,7 +119,7 @@ int main() {
     read_edges("edge_list.txt");
 
     // convert edge list into adjacency matrix once we know total_nodes
-    build_adj_matrix();
+    build_adj_list();
     
     cout << "Total nodes: " << total_nodes << endl;
     
